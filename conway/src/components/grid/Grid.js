@@ -10,7 +10,8 @@ class Grid extends Component {
     isRunning: false,
     CELL_SIZE: 10,
     WIDTH: 500,
-    HEIGHT: 500
+    HEIGHT: 500,
+    counter: 0
   };
 
   rows = this.state.HEIGHT / this.state.CELL_SIZE;
@@ -56,7 +57,6 @@ class Grid extends Component {
   }
 
   handleClick = event => {
-    console.log("YO YO YO");
     const elemOffset = this.getElementOffset();
     const offsetX = event.clientX - elemOffset.x;
     const offsetY = event.clientY - elemOffset.y;
@@ -90,20 +90,96 @@ class Grid extends Component {
     this.setState({ interval: event.target.value });
   };
 
+  handleClear = () => {
+    this.board = this.makeEmptyBoard();
+    this.setState({
+      cells: this.makeCells(),
+      counter: 0
+    });
+  };
+
+  handleRandom = () => {
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        this.board[y][x] = Math.random() >= 0.5;
+      }
+      this.stopGame();
+    }
+    this.setState({
+      counter: 0,
+      cells: this.makeCells()
+    });
+  };
+
   runIteration() {
     console.log("running iteration");
     let newBoard = this.makeEmptyBoard();
-    // TODO: Add logic for each iteration here.
+    for (let y = 0; y < this.rows; y++) {
+      for (let x = 0; x < this.cols; x++) {
+        let neighbors = this.calculateNeighbors(this.board, x, y);
+        /* Checks to see if cell exists */
+        if (this.board[y][x]) {
+          /* Satisfies 2nd rule of Conway's Game of Life */
+          if (neighbors === 2 || neighbors === 3) {
+            /* This cell lives to the next generation */
+            newBoard[y][x] = true;
+          } else {
+            newBoard[y][x] = false;
+          }
+        } else {
+          if (!this.board[y][x] && neighbors === 3) {
+            newBoard[y][x] = true;
+          }
+        }
+      }
+    }
     this.board = newBoard;
-    this.setState({ cells: this.makeCells() });
+    console.log("Generation: ", this.state.counter);
+    this.setState((prevState, { counter }) => ({
+      cells: this.makeCells(),
+      counter: prevState.counter + 1
+    }));
     this.timeoutHandler = window.setTimeout(() => {
       this.runIteration();
     }, this.state.interval);
   }
 
+  calculateNeighbors(board, x, y) {
+    let neighbors = 0;
+    const dirs = [
+      [-1, -1],
+      [-1, 0],
+      [-1, 1],
+      [0, 1],
+      [1, 1],
+      [1, 0],
+      [1, -1],
+      [0, -1]
+    ];
+    for (let i = 0; i < dirs.length; i++) {
+      const dir = dirs[i];
+      let y1 = y + dir[0];
+      let x1 = x + dir[1];
+
+      if (
+        x1 >= 0 &&
+        x1 < this.cols &&
+        y1 >= 0 &&
+        y1 < this.rows &&
+        board[y1][x1]
+      ) {
+        neighbors++;
+      }
+    }
+
+    return neighbors;
+  }
+
   render() {
     return (
       <div>
+        <h2>Generation: {this.state.counter}</h2>
+        <br />
         <div
           className='Board'
           style={{
@@ -140,9 +216,15 @@ class Grid extends Component {
             </button>
           ) : (
             <button className='button' onClick={this.runGame}>
-              Run
+              Play
             </button>
           )}{" "}
+          <button className='button' onClick={this.handleRandom}>
+            Random
+          </button>{" "}
+          <button className='button' onClick={this.handleClear}>
+            Clear
+          </button>{" "}
         </div>
       </div>
     );

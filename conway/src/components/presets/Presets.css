@@ -1,0 +1,9 @@
+.presetButton {
+  border-radius: 15px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+.individualPreset {
+  margin: 0px 20px 40px;
+}
