@@ -16,7 +16,6 @@ function App() {
         <Preset />
         <Rules />
       </div>
-      <About />
     </div>
   );
 }
